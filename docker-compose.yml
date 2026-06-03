@@ -1,0 +1,54 @@
+
+services:
+  # Message Broker (Kafka API Compatible)
+  redpanda:
+    image: docker.redpanda.com/redpandadata/redpanda:v23.2.1
+    command:
+      - redpanda start
+      - --smp 1
+      - --overprovisioned
+      - --kafka-addr internal://0.0.0.0:9092,external://0.0.0.0:19092
+      - --advertise-kafka-addr internal://redpanda:9092,external://localhost:19092
+    ports:
+      - "19092:19092"
+
+  # Time-Series & Relational Storage
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: retail_admin
+      POSTGRES_PASSWORD: retail_secure_pass
+      POSTGRES_DB: omnistream_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - pgdata:/var/lib/postgresql/data
+
+  # Local Services for testing (We will build these next)
+  producer:
+    build: ./services/producer
+    depends_on:
+      - redpanda
+    environment:
+      KAFKA_BROKER: redpanda:9092
+
+  consumer_ml:
+    build: ./services/consumer_ml
+    depends_on:
+      - redpanda
+      - postgres
+    environment:
+      KAFKA_BROKER: redpanda:9092
+      DATABASE_URL: postgresql://retail_admin:retail_secure_pass@postgres:5432/omnistream_db
+      
+  dashboard:
+    build: ./services/dashboard
+    ports:
+      - "8501:8501"
+    depends_on:
+      - postgres
+    environment:
+      DATABASE_URL: postgresql://retail_admin:retail_secure_pass@postgres:5432/omnistream_db
+volumes:
+  pgdata:
