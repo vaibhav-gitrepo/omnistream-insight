@@ -37,3 +37,48 @@ The platform utilizes a decoupled microservices architecture orchestrating five 
                                      ▼
                     [ Streamlit Observability Web UI ]
                (Live Analytical Graphs & Metric Gauges)
+
+
+Detailed Functional Steps:
+
+1. The Ingestion Source (Producer Service): A multi-threaded simulation engine mimicking distinct retail distribution nodes. It continuously generates transaction payloads structured with Store IDs, Material IDs, Item Quantities, Transaction Values, and IDoc Status signals.
+
+2. The Event Broker (Redpanda Layer): Acts as a low-latency event-streaming message bus. It ingests the multi-threaded JSON streams into dedicated, partitioned retail-operations topics, completely decoupling data production from downstream consumers.
+
+3. The Analytics & Inference Hub (Consumer Engine): A continuous Python streaming consumer that pulls messages from the broker, applies explicit data type transformations via Pandas, and extracts structural attributes for analysis.
+
+4. Predictive Analytics Stage: The processed payload is piped into a pre-compiled Scikit-Learn unsupervised model to classify transactional risks and evaluate material consumption limits concurrently.
+
+5. Persistence Layer: Structured records, accompanying anomaly classifications, and stockout alert matrices are written directly into a PostgreSQL target system.
+
+6. The User Layer (Observability Dashboard): A client-facing Streamlit application that monitors the database. It utilizes auto-refreshing polling threads to display transaction variations, live metric feeds, operational SLA statuses, and high-priority system anomaly reports.
+
+💻 Technologies & Frameworks Used
+
+* Programming Language: Python 3.10+ (Core backend execution environment)
+
+* Message Broker Infrastructure: Redpanda / Apache Kafka (High-throughput, event-driven streaming architecture)
+
+* Storage Engines: PostgreSQL (Time-series analytical storage and system health logging)
+
+* Containerization & Deployment: Docker & Docker Compose (Microservice orchestration and local replication stability)
+
+* Hosting Platforms: Neon.tech (Serverless managed cloud database infrastructure), Streamlit Community Cloud (Public front-end hosting)
+
+🤖 Machine Learning Model: Isolation Forest
+
+Working Principle:The predictive anomaly architecture uses an Isolation Forest classifier, an unsupervised machine learning algorithm optimized for high-dimensional data spaces and streaming outlier detection.Unlike typical classification models that attempt to map and profile what a "normal" transaction looks like, the Isolation Forest isolates anomalies explicitly. It builds an ensemble of completely randomized Decision Trees over the input features:
+      
+         $$\text{Input Features} = [\text{Quantity}, \text{Amount}, \text{Is\_Status\_51}]$$
+
+Because anomalies structurally possess distinct characteristics (e.g., abnormally massive order amounts, extreme batch volumes, or critical error flags like IDoc Status 51), they require significantly fewer random splits to become completely isolated from the rest of the dataset.
+
+🌍 Real-World Business Value
+
+1. Minimizing Operational Downtime (MTTR Reduction): By detecting faulty backend communication lines and IDoc Status 51 errors the split-second they appear in the queue, operations teams can respond before entire retail point-of-sale (POS) systems experience data sync delays.
+
+2. Autonomous Risk Mitigation: Rather than performing manual audit checks at the end of a fiscal month, enterprise operators get instant notification of erratic volume spikes, irregular store purchases, or data transmission failures.
+
+3. Inventory Stockout Prevention: The rule engine monitors immediate order velocities against current stock limits, enabling automated, proactive procurement triggers before items completely clear out from physical retail floors.
+
+4. Preserving a "Clean Core" Strategy: By running heavy data science operations and dashboard applications entirely outside the primary ERP instance, companies maintain standard upgrade paths and reduce performance strain on their central transactional system.
